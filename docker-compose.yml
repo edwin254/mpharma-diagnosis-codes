@@ -1,0 +1,78 @@
+version: '3.0'
+
+services:
+  app:
+    container_name: ${APP_NAME}
+    build:
+      context: .
+    restart: unless-stopped
+    command: "gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 3 --threads 3"
+    # command: "python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - app-data:/app
+    ports:
+      - 8000:8000
+    networks:
+      - mpharma-diagnosis
+    depends_on:
+      - postgres_db
+      - redis
+    env_file:
+      - ./.env
+
+  emailer:
+    build:
+      context: ./notifier/
+    depends_on:
+      - app
+      - redis
+
+  redis:
+    image: "redis:alpine"
+    command: redis-server
+    ports:
+      - "6379:6379"
+    volumes:
+      - $PWD/redis-data:/var/lib/redis
+      - $PWD/redis.conf:/usr/local/etc/redis/redis.conf
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    env_file:
+      - ./.env
+  nginx:
+    image: nginx:alpine
+    container_name: ${APP_NAME}_nginx
+    restart: unless-stopped
+    command: ash -c "nginx -g 'daemon off;'"
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - app-data:/app
+    ports:
+      - 1337:80
+    depends_on:
+      - app
+    networks:
+      - mpharma-diagnosis
+    env_file:
+      - ./.env
+
+  db:
+    image: postgres:13.1-alpine
+    container_name: ${APP_NAME}_db
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    volumes:
+      - pgdata:/var/lib/posgresql/data
+    ports:
+      - ${POSTGRES_PORT}:5432
+    networks:
+      - mpharma-diagnosis
+
+
+volumes:
+  app-data:
+  pgdata:
+
+networks:
+  mpharma-diagnosis:
