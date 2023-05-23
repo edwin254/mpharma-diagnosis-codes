@@ -5,7 +5,6 @@ from os.path import abspath, dirname
 import pandas as pd  # Use polars library is faster than pandas library
 from django.core.management.base import BaseCommand
 
-from diagnosis_codes.models import Diagnosis, DiagnosisCategory
 from diagnosis_codes.utils import create_diagnoses, create_diagnosis_categories
 
 logger = logging.getLogger(__name__)
@@ -18,10 +17,9 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **options):
+        version = options['version']
         try:
             project_root  = dirname(dirname(dirname(abspath(__file__) )))
-            version = options['version']
-
             logger.info(f'{project_root} project root')
             data_directory  =  os.path.join(project_root , 'data')
             logger.info(f'{data_directory} data directory')

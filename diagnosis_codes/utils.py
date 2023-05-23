@@ -2,7 +2,7 @@ import logging
 
 import pandas as pd
 
-from .models import Diagnosis, DiagnosisCategory
+from .models import Diagnosis, DiagnosisCategory, IcdVersion
 
 logger = logging.getLogger(__name__)
 
@@ -44,20 +44,18 @@ def create_diagnosis_categories(data):
 
     # create diagnosis categories
     try:
-        categories = []
-        for i in range(len(data)):
-            categories.append(DiagnosisCategory(
+        for i in range(len(clean_df)):
+            (DiagnosisCategory.objects.get_or_create(
                 code=data.iloc[i]['code'],
                 description=data.iloc[i]['description']
             ))
 
-        DiagnosisCategory.objects.bulk_create(categories)
-        logger.info(f' {len(categories)} Diagnosis categories created.')
+        logger.info(f' {(len(data))} Diagnosis categories created.')
     except Exception as e:
         logger.error(e)
 
 
-def create_diagnoses(data, version):
+def create_diagnoses(data, version=None):
     """
     Creates the diagnoses.
 
@@ -69,14 +67,17 @@ def create_diagnoses(data, version):
     """
 
     # clean diagnosis data
-    clean_df = clean_diagnosis_data(data=data)
-    diagnosis_df = clean_df[['category', 'code', 'full_code', 'abbreviated_description', 'full_description']]
+    diagnosis_df = clean_diagnosis_data(data=data)
+    clean_df = diagnosis_df[['category', 'code', 'full_code', 'abbreviated_description', 'full_description']]
+
+    version, _ = IcdVersion.objects.get_or_create(version=version)
+
 
     # create diagnoses
     try:
         diagnoses = []
         for i in range(len(clean_df)):
-            category = DiagnosisCategory.objects.get_or_create(code=diagnosis_df.iloc[i]['category'])
+            category, _ = DiagnosisCategory.objects.get_or_create(code=clean_df.iloc[i]['category'])
             diagnoses.append(Diagnosis(
                 icd_version=version,
                 category=category,

@@ -6,6 +6,7 @@ import pandas as pd
 import redis
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
+from tasks import send_email_notification
 
 from diagnosis_codes.models import Diagnosis, DiagnosisCategory
 from diagnosis_codes.utils import create_diagnoses
@@ -42,8 +43,10 @@ class UploadFileView(generics.CreateAPIView):
 
         # publisher notification
 
-        r = redis.Redis(host='localhost', port=6379, db=0)
-        r.publish('diagnosis_upload', json.dumps({"receiver": request.user.email, "record_count": data.shape[0]}))
+        send_email_notification.delay(request.user.email, 'Your file has been uploaded successfully.')
+
+        # r = redis.Redis(host='localhost', port=6379, db=0)
+        # r.publish('diagnosis_upload', json.dumps({"receiver": request.user.email, "record_count": data.shape[0]}))
 
         return Response({"status": "success"},
                         status.HTTP_201_CREATED)

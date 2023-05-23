@@ -21,7 +21,7 @@ class FileUploadSerializer(serializers.Serializer):
     version = serializers.CharField(max_length=100)
 
 # ICD Serializer
-class DiagnosisICDSerializer(serializers.ModelSerializer):
+class DiagnosisICDSerializer(BaseModelSerializer):
     class Meta:
         model = Diagnosis
         fields = '__all__'
@@ -29,7 +29,7 @@ class DiagnosisICDSerializer(serializers.ModelSerializer):
 
 
 #DiagnosisCategory Seriliazer
-class DiagnosisCategorySerializer(serializers.ModelSerializer):
+class DiagnosisCategorySerializer(BaseModelSerializer):
     class Meta:
         model = DiagnosisCategory
         fields = '__all__'
